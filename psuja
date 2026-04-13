@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>PSUJA 4</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f4f8;
+    }
+
+    h1 {
+      color: #0b3d91;
+      font-size: 48px;
+      margin-top: 20px;
+    }
+
+    #score {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 60px);
+      grid-template-rows: repeat(10, 60px);
+      gap: 5px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border: 2px solid #333;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .piece {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: absolute;
+      top: -70px;
+      left: 0;
+      animation: drop 0.3s ease forwards;
+    }
+
+    .blue { background: blue; }
+    .yellow { background: gold; }
+
+    @keyframes drop {
+      to { top: 0; }
+    }
+
+    #resetBtn {
+      margin-top: 20px;
+      padding: 15px 25px;
+      font-size: 18px;
+      color: white;
+      background: purple;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #resetBtn:hover {
+      opacity: 0.8;
+    }
+
+    #victory {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 60px;
+      font-weight: bold;
+      color: red;
+      display: none;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>PSUJA 4</h1>
+  <div id="score">Bleu : 0 | Jaune : 0</div>
+
+  <div id="grid"></div>
+  <div id="victory">PSUJA VICTOIRE</div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const victory = document.getElementById("victory");
+    const scoreDisplay = document.getElementById("score");
+
+    const size = 10;
+    let currentPlayer = "blue";
+    let board = [];
+    let score = { blue: 0, yellow: 0 };
+
+    function createGrid() {
+      grid.innerHTML = "";
+      board = [];
+      for (let row = 0; row < size; row++) {
+        board[row] = [];
+        for (let col = 0; col < size; col++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          cell.dataset.col = col;
+          cell.addEventListener("click", handleClick);
+          grid.appendChild(cell);
+          board[row][col] = null;
+        }
+      }
+    }
+
+    function handleClick(e) {
+      const col = parseInt(e.target.dataset.col);
+
+      // Gravité : on trouve la case la plus basse libre
+      for (let row = size - 1; row >= 0; row--) {
+        if (!board[row][col]) {
+          placePiece(row, col);
+          return;
+        }
+      }
+    }
+
+    function placePiece(row, col) {
+      board[row][col] = currentPlayer;
+
+      const index = row * size + col;
+      const cell = grid.children[index];
+
+      const piece = document.createElement("div");
+      piece.classList.add("piece", currentPlayer);
+      cell.appendChild(piece);
+
+      if (checkWin(row, col)) {
+        score[currentPlayer]++;
+        updateScore();
+        showVictory();
+        return;
+      }
+
+      currentPlayer = currentPlayer === "blue" ? "yellow" : "blue";
+    }
+
+    function updateScore() {
+      scoreDisplay.textContent = `Bleu : ${score.blue} | Jaune : ${score.yellow}`;
+    }
+
+    function checkDirection(row, col, dRow, dCol) {
+      let count = 0;
+      const player = board[row][col];
+
+      for (let i = -3; i <= 3; i++) {
+        const r = row + i * dRow;
+        const c = col + i * dCol;
+
+        if (r >= 0 && r < size && c >= 0 && c < size && board[r][c] === player) {
+          count++;
+          if (count === 4) return true;
+        } else {
+          count = 0;
+        }
+      }
+      return false;
+    }
+
+    function checkWin(row, col) {
+      return (
+        checkDirection(row, col, 1, 0) ||
+        checkDirection(row, col, 0, 1) ||
+        checkDirection(row, col, 1, 1) ||
+        checkDirection(row, col, 1, -1)
+      );
+    }
+
+    function showVictory() {
+      victory.style.display = "block";
+      setTimeout(() => {
+        victory.style.display = "none";
+        currentPlayer = "blue";
+        createGrid();
+      }, 2000);
+    }
+
+    createGrid();
+  </script>
+
+  <button id="resetBtn">PSUJA RESET</button>
+
+  <script>
+    const resetBtn = document.getElementById("resetBtn");
+    resetBtn.addEventListener("click", () => {
+      currentPlayer = "blue";
+      createGrid();
+    });
+  </script>
+</body>
+</html>
